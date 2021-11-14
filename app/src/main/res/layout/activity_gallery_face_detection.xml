@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".CaptureFaceDetection.GalleryFaceDetectionActivity">
 
     <ImageView
@@ -24,7 +25,9 @@
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:layout_margin="2dp"
+    >
     <TextView
         android:id="@+id/tv_count"
         android:layout_weight="1"
@@ -39,5 +42,16 @@
         android:text="Classes: " />
 
 </LinearLayout>
+    <com.example.kloadingspin.KLoadingSpin
+        android:id="@+id/KLoadingSpin"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:backgroundColor="#55008DFF"
+        app:primarySpinnerColor="#ffffff"
+        app:rotationSpeedInMs="3000"
+        app:text="Searching for the best \n donut for you..."
+        app:secondarySpinnerColor="#FF9800"
+        app:textColor="#ffffff"
+        app:textSize="80" />
 </RelativeLayout>
 

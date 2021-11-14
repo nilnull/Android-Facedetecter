@@ -1,5 +1,6 @@
 package com.asmaamir.mlkitdemo.CaptureFaceDetection;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -22,6 +23,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.asmaamir.mlkitdemo.R;
+import com.example.kloadingspin.KLoadingSpin;
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.common.FirebaseVisionPoint;
@@ -49,16 +52,18 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
     private Paint dotPaint, linePaint, rectPaint;
     private TextView textView;
     private TextView faceCountTextView;
-
+    private Context context;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery_face_detection);
+        context = this;
         if (allPermissionsGranted()) {
             initViews();
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSION);
         }
+
     }
 
     private void initViews() {
@@ -82,15 +87,27 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == PICK_IMAGE_CODE) {
             if (data != null) {
                 imageView.setImageURI(data.getData());
+                showLoading();
                 textView.setText("Classes: ");
+                faceCountTextView.setText("Detecting...");
                 try {
-                    image = FirebaseVisionImage.fromFilePath(this, Objects.requireNonNull(data.getData()));
+                    image = FirebaseVisionImage.fromFilePath(context, Objects.requireNonNull(data.getData()));
                     initDetector(image);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
+    }
+
+    private void showLoading() {
+        KLoadingSpin a = findViewById(R.id.KLoadingSpin);
+        a.startAnimation();
+        a.setIsVisible(true);
+    }
+    private void hideLoading(){
+        KLoadingSpin a = findViewById(R.id.KLoadingSpin);
+        a.stopAnimation();
     }
 
     private void initDetector(FirebaseVisionImage image) {
@@ -109,7 +126,11 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
                 .getVisionFaceDetector(detectorOptions);
         faceDetector
                 .detectInImage(image)
+                .addOnCanceledListener((OnCanceledListener) () -> {
+                    hideLoading();
+                })
                 .addOnSuccessListener(firebaseVisionFaces -> {
+                    hideLoading();
                     if (!firebaseVisionFaces.isEmpty()) {
 
                         processFaces(firebaseVisionFaces);
@@ -117,15 +138,35 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
                         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
                         Log.i(TAG, "No faces");
                     }
-                }).addOnFailureListener(e -> Log.i(TAG, e.toString()));
+                }).addOnFailureListener(e -> {
+                    hideLoading();
+                Log.i(TAG, e.toString());
+                    Toast.makeText(context,e.toString(),Toast.LENGTH_LONG).show();
+                }
+                );
     }
 
     private void processFaces(List<FirebaseVisionFace> faces) {
         faceCountTextView.setText(faces.size() + " faces detected");
+        int smileFaceCount = 0,sadFaceCount =0 ,noCareFaceCount = 0;
         for (FirebaseVisionFace face : faces) {
+
             Rect bounds = face.getBoundingBox();
             canvas.drawRect(bounds, rectPaint);
-            getProps(face);
+           FaceExpression faceExpression = getProps(face);
+            switch (faceExpression) {
+                case Sad:
+                    sadFaceCount++;
+                    break;
+                case Happy:
+                    smileFaceCount++;
+                    break;
+                case Normal:
+                    noCareFaceCount++;
+                    break;
+                case NotDetected:
+                    break;
+            }
             drawLandMark(face.getLandmark(FirebaseVisionFaceLandmark.LEFT_EAR));
             drawLandMark(face.getLandmark(FirebaseVisionFaceLandmark.RIGHT_EAR));
             drawLandMark(face.getLandmark(FirebaseVisionFaceLandmark.LEFT_EYE));
@@ -150,13 +191,35 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
             drawContours(face.getContour(FirebaseVisionFaceContour.NOSE_BOTTOM).getPoints());
         }
         imageViewCanvas.setImageBitmap(bitmap);
+
+       textView.setText(getFacesPropText(smileFaceCount,sadFaceCount,noCareFaceCount,faces.size()));
+
     }
 
-    private void getProps(FirebaseVisionFace face) {
+    private String getFacesPropText(int smileFaceCount, int sadFaceCount, int noCareFaceCount, int size) {
+String output;
+        if (size > 0){
+            output = "Out of " + size +" faces ";
+            output+= smileFaceCount > 0 ? smileFaceCount + " are happy :)" : " no one is happy :( ";
+            output+= sadFaceCount > 0 ? sadFaceCount + " are sad :( " : " no one is sad :)";
+            output+= noCareFaceCount > 0 ? " and "+ noCareFaceCount + " ppl don't care " : " and no one is normal here!";
+            return output;
+        }else {
+            return "No face is detected";
+        }
+
+    }
+
+    private FaceExpression getProps(FirebaseVisionFace face) {
         float smileProb = 0, rightEyeOpenProb = 0, leftEyeOpenProb = 0;
+       FaceExpression faceExpression;
         if (face.getSmilingProbability() != FirebaseVisionFace.UNCOMPUTED_PROBABILITY) {
             smileProb = face.getSmilingProbability();
+            faceExpression = smileProb > .6 ? FaceExpression.Happy : smileProb < .4 ? FaceExpression.Sad : FaceExpression.Normal;
+        }else {
+            faceExpression = FaceExpression.NotDetected;
         }
+
         if (face.getRightEyeOpenProbability() != FirebaseVisionFace.UNCOMPUTED_PROBABILITY) {
             rightEyeOpenProb = face.getRightEyeOpenProbability();
         }
@@ -170,6 +233,7 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
                 + " " + leftEyeOpenProb
                 + "\n\n"
         );
+        return faceExpression;
     }
 
 
@@ -204,9 +268,11 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         bitmap = Bitmap.createBitmap(image.getBitmap().getWidth(),
                 image.getBitmap().getHeight(),
                 Bitmap.Config.ARGB_8888);
+        if (canvas!= null)
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
+
         canvas = new Canvas(bitmap);
-        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
-        dotPaint = new Paint();
+         dotPaint = new Paint();
         dotPaint.setColor(Color.RED);
         dotPaint.setStyle(Paint.Style.FILL);
         dotPaint.setStrokeWidth(2f);
@@ -229,7 +295,7 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
             if (allPermissionsGranted()) {
                 initViews();
             } else {
-                Toast.makeText(this,
+                Toast.makeText(context,
                         "Permissions not granted by the user.",
                         Toast.LENGTH_SHORT).show();
                 finish();
@@ -239,7 +305,7 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
 
     private boolean allPermissionsGranted() {
         for (String permission : REQUIRED_PERMISSIONS) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
                 return false;
             }
         }
