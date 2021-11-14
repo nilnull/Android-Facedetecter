@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
@@ -24,6 +25,7 @@ import androidx.core.content.ContextCompat;
 
 import com.asmaamir.mlkitdemo.R;
 import com.example.kloadingspin.KLoadingSpin;
+import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
@@ -34,10 +36,12 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetector;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceLandmark;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Objects;
+
 
 public class GalleryFaceDetectionActivity extends AppCompatActivity {
     public static final int REQUEST_CODE_PERMISSION = 111;
@@ -65,6 +69,11 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSION);
         }
+        initEasyImage();
+
+    }
+
+    private void initEasyImage() {
 
     }
 
@@ -78,25 +87,32 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
     }
 
     private void pickImage() {
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        startActivityForResult(intent, PICK_IMAGE_CODE);
+        ImagePicker.with(this)
+                .crop()	    			//Crop image(Optional), Check Customization for more option
+                .compress(1024)			//Final image size will be less than 1 MB(Optional)
+                .maxResultSize(1080, 1080)	//Final image resolution will be less than 1080 x 1080(Optional)
+                .start();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == PICK_IMAGE_CODE) {
+      if (resultCode == RESULT_OK) {
             if (data != null) {
-                imageView.setImageURI(data.getData());
-                showLoading();
-                try {
-                    image = FirebaseVisionImage.fromFilePath(context, Objects.requireNonNull(data.getData()));
-                    initDetector(image);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                initImage(data.getData());
             }
+        }
+    }
+
+    private void initImage(@NonNull Uri imageUri) {
+
+        imageView.setImageURI(imageUri);
+        showLoading();
+        try {
+            image = FirebaseVisionImage.fromFilePath(context, Objects.requireNonNull(imageUri));
+            initDetector(image);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
