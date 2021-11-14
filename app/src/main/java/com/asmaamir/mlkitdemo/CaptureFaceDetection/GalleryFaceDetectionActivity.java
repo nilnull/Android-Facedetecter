@@ -35,14 +35,15 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceLandmark;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Objects;
 
 public class GalleryFaceDetectionActivity extends AppCompatActivity {
-    private static final String TAG = "PickActivity";
     public static final int REQUEST_CODE_PERMISSION = 111;
     public static final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.WRITE_EXTERNAL_STORAGE",
             "android.permission.READ_EXTERNAL_STORAGE"};
+    private static final String TAG = "PickActivity";
     private static final int PICK_IMAGE_CODE = 100;
     private ImageView imageView;
     private ImageView imageViewCanvas;
@@ -53,6 +54,7 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
     private TextView textView;
     private TextView faceCountTextView;
     private Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,8 +90,6 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
             if (data != null) {
                 imageView.setImageURI(data.getData());
                 showLoading();
-                textView.setText("Classes: ");
-                faceCountTextView.setText("Detecting...");
                 try {
                     image = FirebaseVisionImage.fromFilePath(context, Objects.requireNonNull(data.getData()));
                     initDetector(image);
@@ -105,7 +105,8 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         a.startAnimation();
         a.setIsVisible(true);
     }
-    private void hideLoading(){
+
+    private void hideLoading() {
         KLoadingSpin a = findViewById(R.id.KLoadingSpin);
         a.stopAnimation();
     }
@@ -116,7 +117,7 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         FirebaseVisionFaceDetectorOptions detectorOptions = new FirebaseVisionFaceDetectorOptions
                 .Builder()
                 .setMinFaceSize(.1F)
-                .setPerformanceMode( FirebaseVisionFaceDetectorOptions.ACCURATE)
+                .setPerformanceMode(FirebaseVisionFaceDetectorOptions.ACCURATE)
                 .setContourMode(FirebaseVisionFaceDetectorOptions.ALL_CONTOURS)
                 .setLandmarkMode(FirebaseVisionFaceDetectorOptions.ALL_LANDMARKS)
                 .setClassificationMode(FirebaseVisionFaceDetectorOptions.ALL_CLASSIFICATIONS)
@@ -135,25 +136,26 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
 
                         processFaces(firebaseVisionFaces);
                     } else {
+                        faceCountTextView.setText(R.string.no_face_text);
                         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
                         Log.i(TAG, "No faces");
                     }
                 }).addOnFailureListener(e -> {
                     hideLoading();
-                Log.i(TAG, e.toString());
-                    Toast.makeText(context,e.toString(),Toast.LENGTH_LONG).show();
+                    Log.i(TAG, e.toString());
+                    Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
                 }
-                );
+        );
     }
 
     private void processFaces(List<FirebaseVisionFace> faces) {
-        faceCountTextView.setText(faces.size() + " faces detected");
-        int smileFaceCount = 0,sadFaceCount =0 ,noCareFaceCount = 0;
+        faceCountTextView.setText(MessageFormat.format(getString(R.string.face_count_text), faces.size()));
+        int smileFaceCount = 0, sadFaceCount = 0, noCareFaceCount = 0;
         for (FirebaseVisionFace face : faces) {
 
             Rect bounds = face.getBoundingBox();
             canvas.drawRect(bounds, rectPaint);
-           FaceExpression faceExpression = getProps(face);
+            FaceExpression faceExpression = getProps(face);
             switch (faceExpression) {
                 case Sad:
                     sadFaceCount++;
@@ -192,31 +194,31 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         }
         imageViewCanvas.setImageBitmap(bitmap);
 
-       textView.setText(getFacesPropText(smileFaceCount,sadFaceCount,noCareFaceCount,faces.size()));
+        textView.setText(getFacesPropText(smileFaceCount, sadFaceCount, noCareFaceCount, faces.size()));
 
     }
 
     private String getFacesPropText(int smileFaceCount, int sadFaceCount, int noCareFaceCount, int size) {
-String output;
-        if (size > 0){
-            output = "Out of " + size +" faces ";
-            output+= smileFaceCount > 0 ? smileFaceCount + " are happy :)" : " no one is happy :( ";
-            output+= sadFaceCount > 0 ? sadFaceCount + " are sad :( " : " no one is sad :)";
-            output+= noCareFaceCount > 0 ? " and "+ noCareFaceCount + " ppl don't care " : " and no one is normal here!";
+        String output;
+        if (size > 0) {
+            output = "Out of " + size + " faces ";
+            output += smileFaceCount > 0 ? smileFaceCount + " are happy :)" : " no one is happy :( ";
+            output += sadFaceCount > 0 ? sadFaceCount + " are sad :( " : " no one is sad :)";
+            output += noCareFaceCount > 0 ? " and " + noCareFaceCount + " ppl don't care " : " and no one is normal here!";
             return output;
-        }else {
-            return "No face is detected";
+        } else {
+            return getResources().getString(R.string.no_face_text);
         }
 
     }
 
     private FaceExpression getProps(FirebaseVisionFace face) {
         float smileProb = 0, rightEyeOpenProb = 0, leftEyeOpenProb = 0;
-       FaceExpression faceExpression;
+        FaceExpression faceExpression;
         if (face.getSmilingProbability() != FirebaseVisionFace.UNCOMPUTED_PROBABILITY) {
             smileProb = face.getSmilingProbability();
             faceExpression = smileProb > .6 ? FaceExpression.Happy : smileProb < .4 ? FaceExpression.Sad : FaceExpression.Normal;
-        }else {
+        } else {
             faceExpression = FaceExpression.NotDetected;
         }
 
@@ -268,11 +270,11 @@ String output;
         bitmap = Bitmap.createBitmap(image.getBitmap().getWidth(),
                 image.getBitmap().getHeight(),
                 Bitmap.Config.ARGB_8888);
-        if (canvas!= null)
+        if (canvas != null)
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.MULTIPLY);
 
         canvas = new Canvas(bitmap);
-         dotPaint = new Paint();
+        dotPaint = new Paint();
         dotPaint.setColor(Color.RED);
         dotPaint.setStyle(Paint.Style.FILL);
         dotPaint.setStrokeWidth(2f);

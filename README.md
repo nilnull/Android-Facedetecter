@@ -14,21 +14,17 @@ The app contains various examples of ML-Kit (Vision part), each example is prese
 ### 📸 Camera
 - [📷 CameraX example](app/src/main/java/com/asmaamir/mlkitdemo/CameraX): Preview, Capture and Analyze functionalities 🤹‍♀️ 
 
-### 💼 ML Kit Models
-- [👩‍🚀 Real time face detection](app/src/main/java/com/asmaamir/mlkitdemo/RealTimeFaceDetection): Contour detecting 
-- [🎴 Face detection from a picked image](app/src/main/java/com/asmaamir/mlkitdemo/CaptureFaceDetection): Contour, landmarks and face classification
-- [🕵️‍♀️ Face detection and tracking](app/src/main/java/com/asmaamir/mlkitdemo/FaceTracking): Tracking faces over frames
-- [🌞 Real time object detection](app/src/main/java/com/asmaamir/mlkitdemo/RealTimeObjectDetection): Object detection and classification
-
 
 ## Note
 -  Presented codes are not optimized, since it is a demo it aims **simplicity**
 -  Check out best practices that will be suitable to your project
+- this is built over the asmaamircode from github 
 
-## 🐞 Known Bug
-- 🙄 Face contour detection functionality can detect contours of an only single face in the image 
+##  Known Bug
+-  Face contour detection functionality can detect contours of an only single face in the image 
   - [👀 Stack Overflow](https://stackoverflow.com/q/57203678)
-- 👩‍💻 Please tell me if you have a solution
+-  Big photos take time
+-  No cancellation button is provided
 
 ## Screenshots
 

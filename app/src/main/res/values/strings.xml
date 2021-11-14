@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MLKitDemo</string>
+    <string name="app_name">Ace Resources Face Detection</string>
     <string name="camerax">CameraX</string>
     <string name="cam_analyze">Camera With Analyzer</string>
     <string name="open">Open</string>
@@ -14,4 +14,6 @@
     <string name="object_detection_local">Object Detection | Local</string>
     <string name="image_classification_local">Image Classification | Local</string>
     <string name="object_detection_local_video">Object Detection Video | Local</string>
+    <string name="no_face_text">No face is detected</string>
+    <string name="face_count_text">{0} faces detected</string>
 </resources>
