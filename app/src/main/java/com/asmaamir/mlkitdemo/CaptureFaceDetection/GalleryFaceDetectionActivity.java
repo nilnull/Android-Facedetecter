@@ -36,7 +36,6 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetector;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceLandmark;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.List;
@@ -69,13 +68,9 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSION);
         }
-        initEasyImage();
 
     }
 
-    private void initEasyImage() {
-
-    }
 
     private void initViews() {
         imageView = findViewById(R.id.img_view_pick);
@@ -168,7 +163,6 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         faceCountTextView.setText(MessageFormat.format(getString(R.string.face_count_text), faces.size()));
         int smileFaceCount = 0, sadFaceCount = 0, noCareFaceCount = 0;
         for (FirebaseVisionFace face : faces) {
-
             Rect bounds = face.getBoundingBox();
             canvas.drawRect(bounds, rectPaint);
             FaceExpression faceExpression = getProps(face);
@@ -244,13 +238,6 @@ public class GalleryFaceDetectionActivity extends AppCompatActivity {
         if (face.getLeftEyeOpenProbability() != FirebaseVisionFace.UNCOMPUTED_PROBABILITY) {
             leftEyeOpenProb = face.getRightEyeOpenProbability();
         }
-
-        textView.setText(textView.getText()
-                + " " + smileProb
-                + " " + rightEyeOpenProb
-                + " " + leftEyeOpenProb
-                + "\n\n"
-        );
         return faceExpression;
     }
 
